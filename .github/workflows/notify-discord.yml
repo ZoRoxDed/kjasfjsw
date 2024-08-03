@@ -1,0 +1,45 @@
+name: Notify Discord on Success
+
+on:
+  push:
+    branches:
+      - main  # or the branch you want to trigger the pipeline from
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python (or any language/environment you need)
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Run your build or test script
+        run: |
+          echo "Running pipeline..."
+          # Add your build or test commands here
+
+      - name: Notify Discord
+        if: success()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+            const message = "Pipeline execution successful!";
+            
+            const response = await fetch(webhookUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ content: message })
+            });
+
+            if (!response.ok) {
+              throw new Error(`Failed to send message to Discord: ${response.statusText}`);
+            }
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
